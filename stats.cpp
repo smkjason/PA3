@@ -8,12 +8,12 @@ stats::stats(PNG & im){
 	double Sat = 0.;
 	double Lum = 0.;
 	int binnumber = 0;
-	for(int t = 0; t < im.width(); t++){
+	for(unsigned int t = 0; t < im.width(); t++){
 		sumHueX.push_back(vector<double>(im.height(), 0));
 		sumHueY.push_back(vector<double>(im.height(), 0));
 		sumSat.push_back(vector<double>(im.height(), 0));
 		sumLum.push_back(vector<double>(im.height(), 0));
-		hist.push_back(vector<vector<double>>(im.height(), vector<double>(36,0)));
+		hist.push_back(vector<vector<int>>(im.height(), vector<int>(36,0)));
 	}
 	for(unsigned int i = 0; i < im.width(); i++){
 		for(unsigned int j = 0; j < im.height(); j++){
@@ -135,7 +135,7 @@ vector<int> stats::buildHist(pair<int,int> ul, pair<int,int> lr){
 // takes a distribution and returns entropy
 // partially implemented so as to avoid rounding issues.
 double stats::entropy(vector<int> & distn,int area){
-/*
+
 	double entropy = 0.;
 
 //	 your code here 
@@ -147,13 +147,12 @@ double stats::entropy(vector<int> & distn,int area){
 	}
 
 	return  -1 * entropy;
-*/
-return -1;
 }
 
 double stats::entropy(pair<int,int> ul, pair<int,int> lr){
 
-	double en = 0.;
+	vector<int> histogram = buildHist(ul, lr);
+	double en = entropy(histogram, rectArea(ul, lr)); 
 	/* your code here */
 	return en;
 }
