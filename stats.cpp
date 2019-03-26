@@ -102,9 +102,20 @@ HSLAPixel stats::getAvg(pair<int,int> ul, pair<int,int> lr){
 
 vector<int> stats::buildHist(pair<int,int> ul, pair<int,int> lr){
 
-/* your code here */
+    vector<int> histogram;
+    histogram.resize(36);
+    for(int k = 0; k < 36; k++){
+	histogram[k] = 0;
+	histogram[k] += hist[lr.first][lr.second][k];
+	// subtract the rectangle on its left
+	histogram[k] -= hist[ul.first-1][lr.second][k];
+	// subtract the rectangle on the top
+	histogram[k] -= hist[lr.first][ul.second-1];
+	// add the upper left corner rectangle
+	histogram[k] += hist[ul.first-1][ul.second-1];
+    }
+    return histogram;
 }
-
 // takes a distribution and returns entropy
 // partially implemented so as to avoid rounding issues.
 double stats::entropy(vector<int> & distn,int area){
@@ -125,6 +136,7 @@ double stats::entropy(vector<int> & distn,int area){
 
 double stats::entropy(pair<int,int> ul, pair<int,int> lr){
 
+double en = 0.;
 /* your code here */
-
+return en;
 }
