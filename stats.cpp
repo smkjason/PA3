@@ -2,7 +2,7 @@
 #include "stats.h"
 
 stats::stats(PNG & im){
-
+ //testing
 	double valueX = 0.;
 	double valueY = 0.;
 	double Sat = 0.;
