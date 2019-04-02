@@ -189,7 +189,12 @@ private:
    */
    Node * buildTree(PNG * im, int k);
 
-   /* =================== end of private PA3 functions ============== */
+   double getAvg(stats Stats, pair<int,int> SE_ul, int k); 
+
+   double getEntropy(stats s, pair<int,int> ul, pair<int,int> lr, int k);
+
+   PNG * makePNG(PNG * im, pair<int,int> ul, int k); 
+  /* =================== end of private PA3 functions ============== */
 };
 
 #endif

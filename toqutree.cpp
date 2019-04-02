@@ -45,28 +45,26 @@ toqutree::toqutree(PNG & imIn, int k){
 	/* in imIn and uses it to build a quadtree. It may assume  */
 	/* that imIn is large enough to contain an image of that size. */
 	/* your code here */
-	
+	/*
 	//CHECK k for base case
 	if(k == 1){
-		Node * nw = new Node(make_pair(0,0), 0, 	
-
-
-
-
+		Node * nw = new Node(make_pair(0,0), 0, *(imIn.getPixel(0,0))); 	
+		
 	}
-	int ctrX = imIn->width()/2;
+	int ctrX = imIn.width()/2;
 	int ul = ctrX - pow(2,k)/2;
 	int lr = ul + pow(2,k-1) - 1;
 	pair<int, int> ul_middle(ul,ul);
 	pair<int, int> lr_middle(lr, lr);
 	
 	//make the subPNG 
-	PNG * parent = makePNG(im, ul_middle, k-1);
+	PNG * parent = makePNG(imIn, ul_middle, k-1);
 	
 	//Pointer??
-	stats statsInfo = new stats(*root);
+	stats * statsInfo = new stats(*parent);
 	
 	*root = buildTree(parent, k);
+*/
 }
 
 int toqutree::size() {
@@ -75,7 +73,7 @@ int toqutree::size() {
 
 //@param k : dimension of im
 toqutree::Node * toqutree::buildTree(PNG * im, int k) {
-
+/*
 	//the splitting point that has the least entropy
 	pair<int, int> Split_Point;//AKA center
 
@@ -86,7 +84,7 @@ toqutree::Node * toqutree::buildTree(PNG * im, int k) {
 	pair<int, int> lr_middle(lr, lr);
 	
 	//Pointer??
-	stats statsInfo = new stats(*im);
+	stats * statsInfo = new stats(*im);
 	
 	//Find the min ENTROPY within ul_middle
 	double minEntropy = getAvg(statsInfo, ul_middle, k-1);  
@@ -94,8 +92,8 @@ toqutree::Node * toqutree::buildTree(PNG * im, int k) {
 	pair<int,int> check_P = ul_middle;
 	Split_Point = check_P;
 
-	for(int x = ul_middle; x < pow(2,k-1); x++){
-		for(int y = ul; y < pow(2,k-1); y++){
+	for(int x = ul_middle.first; x < pow(2,k-1); x++){
+		for(int y = ul_middle.first; y < pow(2,k-1); y++){
 			check_P.first = x;
 			check_P.second = y;
 			check_Entropy = getAvg(statsInfo, check_P, k-1);
@@ -120,15 +118,15 @@ toqutree::Node * toqutree::buildTree(PNG * im, int k) {
 	// declare a dynamically allocated stats object, and free it
 	// once you've used it to choose a split point, and calculate
 	// an average.
-
+*/
 }
 //having the average entropy of quadrants
 //find the ul and lr of each quadrant is done here
 // @param im  : the original image
 // @param SE_ul : possible splitting point
 // @param k   : dimention of the middle square you are traversing through AKA the dim of quadrant
-double getAvg(stats Stats, pair<int,int> SE_ul, int k){
-	//call getEntropy for each Quadrant 
+double toqutree::getAvg(stats Stats, pair<int,int> SE_ul, int k){
+/*	//call getEntropy for each Quadrant 
 	pair<int,int> SE_lr, SW_ul, SW_lr, NE_ul, NE_lr, NW_ul, NW_lr;
 	int index = pow(2,k) - 1;
 	int dim = pow(2,k+1);
@@ -159,13 +157,14 @@ double getAvg(stats Stats, pair<int,int> SE_ul, int k){
 	double Average = getEntropy(Stats, SE_ul, SE_lr, k) + getEntropy(Stats, SW_ul, SW_lr, k)
 		+ getEntropy(Stats, NE_ul, NE_lr, k) + getEntropy(Stats, NW_ul, NW_lr, k);
 	return Average/4;
+*/
 }
 //get entropy of given quadrant *HANDLE WRAPPING HERE*
 // @param s : Stats of original image
 // @param ul, lr: ul, lr of the quadrant you are calculating entropy for
 // @param k : the dimension of the quadrant where the quadrant is 2^k x 2^k
-double getEntropy(stats s, pair<int,int> ul, pair<int,int> lr, int k){
-
+double toqutree::getEntropy(stats s, pair<int,int> ul, pair<int,int> lr, int k){
+/*
 	int last_index = pow(2,k+1) - 1;
 	int index = pow(2,k) - 1;
 	//NO WRAPPING
@@ -208,7 +207,7 @@ double getEntropy(stats s, pair<int,int> ul, pair<int,int> lr, int k){
 		}
 		return s.entropy(bottom, pow(2,k+1));
 	}
-
+*/
 }
 
 PNG toqutree::render(){
@@ -269,8 +268,8 @@ toqutree::Node * toqutree::copy(const Node * other) {
 //@param  im  : the PNG of the parent
 //@param  ul, lr  : ul and lr of the children PNG you will return
 //@param  k   : the dimension of children
-PNG * makePNG(PNG *im, pair<int,int> ul, int k){
-	
+PNG * toqutree::makePNG(PNG *im, pair<int,int> ul, int k){
+/*	
 	PNG * Children(pow(2,k), pow(2,k));
 //double check
 	int i = 0;
@@ -282,7 +281,7 @@ PNG * makePNG(PNG *im, pair<int,int> ul, int k){
 			*(Children->getPixel(x, y)) = im->getPixel(i,j);
 		}
 	}
-/*	
+///*	
 	int ogX, ogY;
 	//NOWRAPPING
 	if(ul.first < lr.first && ul.second < lr.second){
