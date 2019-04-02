@@ -230,7 +230,33 @@ void toqutree::prune(double tol){
 
 /* called by destructor and assignment operator*/
 void toqutree::clear(Node * & curr){
-	/* your code here */
+	if(curr->dimension == 0){
+		delete curr;
+		return;
+	}
+	else{
+		if(curr->NW != NULL){
+			clear(curr->NW);
+			delete curr;
+			return;
+		}
+		if(curr->NE != NULL){
+			clear(curr->NW);
+			delete curr;
+			return;
+		}
+		if(curr->SW != NULL){
+			clear(curr->NW);
+			delete curr;
+			return;
+		}
+		if(curr->SE != NULL){
+			clear(curr->NW);
+			delete curr;
+			return;
+		}
+
+	}
 }
 
 /* done */
