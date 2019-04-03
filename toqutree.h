@@ -194,7 +194,16 @@ private:
    double getEntropy(stats s, pair<int,int> ul, pair<int,int> lr, int k);
 
    PNG * makePNG(PNG * im, pair<int,int> ul, int k); 
-  /* =================== end of private PA3 functions ============== */
+  	
+ //  PNG * helpRender(Node * node);
+   
+  // void fillPNG(PNG * Image, pair<int,int> ul, pair<int,int> lr, int k);
+   
+  HSLAPixel * findPixel(Node * node, int x, int y);
+
+  bool checkinQuad(pair<int,int> ul, pair<int,int> lr, pair<int,int> coord, int k); 
+
+/* =================== end of private PA3 functions ============== */
 };
 
 #endif
