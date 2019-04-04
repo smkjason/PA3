@@ -189,7 +189,7 @@ private:
    */
    Node * buildTree(PNG * im, int k);
 
-   double getAvg(stats Stats, pair<int,int> SE_ul, int k); 
+   double get_Avg(stats Stats, pair<int,int> SE_ul, int k); 
 
    double getEntropy(stats s, pair<int,int> ul, pair<int,int> lr, int k);
 
