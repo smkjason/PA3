@@ -45,8 +45,9 @@ toqutree::toqutree(PNG & imIn, int k){
 	int uly = ctrY - pow(2,k)/2;
 	pair<int, int> ul_middle(ulx,uly);
 	
+	printf("The height of Original Image is :%d", imIn.height());	
 	//make the subPNG 
-	PNG * parent = makePNG(&imIn, ul_middle, k-1);
+	PNG * parent = makePNG(&imIn, ul_middle, k);
 	
 	root = buildTree(parent, k);
 }
@@ -58,25 +59,10 @@ int toqutree::size() {
 //@param k : dimension of im
 toqutree::Node * toqutree::buildTree(PNG * im, int k) {
 
-	if(k==1){
-		stats * baseStat = new stats(*im);
-		root->center = make_pair(0,0);
-		root->dimension = k;
-		root->a = baseStat.getAvg(make_pair(0,0), make_pair(1,1));
-
-		Node * se = new Node(make_pair(0,0), 0, *(imIn.getPixel(x,y))); 	
-		Node * sw = new Node(make_pair(x+1,y), 0, *(imIn.getPixel(x+1,y)));
-		Node * nw = new Node(make_pair(x+1,y+1), 0, *(imIn.getPixel(x+1,y+1))); 
-		Node * ne = new Node(make_pair(x,y+1), 0, *(imIn.getPixel(x,y+1)));
-		
-		root->SE = se;
-		root->SW = sw;
-		root->NW = nw;
-		root->NE = ne;
-
-		return root;
+	if(k==0){
+	printf("BASE CASE OF BUILD TREE!!!\n");
+		return new Node(make_pair(0,0), k, *(im->getPixel(0,0)));
 	}	
-
 	//the splitting point that has the least entropy
 	pair<int, int> Split_Point;//AKA center
 	
@@ -90,27 +76,30 @@ toqutree::Node * toqutree::buildTree(PNG * im, int k) {
 	pair<int, int> ul_middle(ul,ul);
 	//pair<int, int> lr_middle(lr, lr);
 	
-	stats * statsInfo = new stats(*im);
-	
+	printf("The index is: %d\n", index);
+	stats statsInfo(*im);
+	printf("What is k for the stat? : %d\n AND What is the height of im? : %d\n", k, im->height());
+	printf("stats object made\n");	
 	//Find the min ENTROPY within ul_middle
-	double minEntropy = getAvg(*statsInfo, ul_middle, k-1);  
+	double minEntropy = get_Avg(statsInfo, ul_middle, k-1);  	
+	printf("The index is: %d\n", index);
 	double check_Entropy;
 	pair<int,int> check_P = ul_middle;
 	Split_Point = check_P;
-
 	for(int x = ul_middle.first; x <= ul_middle.first + index; x++){
-		for(int y = ul_middle.first; y <= ul_middle.first + index; y++){
+		for(int y = ul_middle.second; y <= ul_middle.second + index; y++){
 			check_P.first = x;
 			check_P.second = y;
-			check_Entropy = getAvg(*statsInfo, check_P, k-1);
+			check_Entropy = get_Avg(statsInfo, check_P, k-1);
 			if(check_Entropy < minEntropy){
 				minEntropy = check_Entropy;
 				Split_Point = check_P;
 			} 
 		}
 	}
+	printf("I've found the optimal split_point\n");
 	//Find average pixel for the root
-	HSLAPixel a = statsInfo->getAvg(make_pair(0,0), make_pair(pow(2,k)-1, pow(2,k)-1));
+	HSLAPixel a = statsInfo.getAvg(make_pair(0,0), make_pair(pow(2,k)-1, pow(2,k)-1));
 	//Node to return (The root of the toqutree)
 	
 	Node * node = new Node(Split_Point, k, a); 
@@ -133,10 +122,17 @@ toqutree::Node * toqutree::buildTree(PNG * im, int k) {
 	PNG * NEs = makePNG(im, NE_ul, k-1);
 	PNG * NWs = makePNG(im, NW_ul, k-1);
 
+	printf("I've made all sub PNGS for the childern\n");
+
 	node->NW = buildTree(SEs, k-1);
 	node->SW = buildTree(SWs, k-1);
 	node->NE = buildTree(NEs, k-1);
 	node->NW = buildTree(NWs, k-1);
+
+	delete(SEs);
+	delete(SWs);
+	delete(NEs);
+	delete(NWs);
 	
 	return node;
 	// Note that you will want to practice careful memory use
@@ -153,15 +149,16 @@ toqutree::Node * toqutree::buildTree(PNG * im, int k) {
 // @param im  : the original image
 // @param SE_ul : possible splitting point
 // @param k   : dimention of the middle square you are traversing through AKA the dim of quadrant
-double toqutree::getAvg(stats Stats, pair<int,int> SE_ul, int k){
+double toqutree::get_Avg(stats Stats, pair<int,int> SE_ul, int k){
 	//call getEntropy for each Quadrant 
 	
+	printf("I'm in get_Avg\n");	
 	double Average = 0.;
 	pair<int,int> SE_lr, SW_ul, SW_lr, NE_ul, NE_lr, NW_ul, NW_lr;
 	int index = pow(2,k) - 1;
 	int dim = pow(2,k+1);
 	SE_lr.first = SE_ul.first + index;
-	SE_lr.second = SE_lr.second + index;
+	SE_lr.second = SE_ul.second + index;
 
 	//mod is for if the point is off the picture
 	SW_ul.first = (SE_ul.first + index + 1) % dim;
@@ -186,7 +183,7 @@ double toqutree::getAvg(stats Stats, pair<int,int> SE_ul, int k){
 	//check the notation passing by reference etc for Stats
 	Average = getEntropy(Stats, SE_ul, SE_lr, k) + getEntropy(Stats, SW_ul, SW_lr, k)
 		+ getEntropy(Stats, NE_ul, NE_lr, k) + getEntropy(Stats, NW_ul, NW_lr, k);
-	return Average/4;
+	return Average/4.;
 
 }
 //get entropy of given quadrant *HANDLE WRAPPING HERE*
@@ -194,50 +191,52 @@ double toqutree::getAvg(stats Stats, pair<int,int> SE_ul, int k){
 // @param ul, lr: ul, lr of the quadrant you are calculating entropy for
 // @param k : the dimension of the quadrant where the quadrant is 2^k x 2^k
 double toqutree::getEntropy(stats s, pair<int,int> ul, pair<int,int> lr, int k){
-
+	//printf("the dimension: %d, the ul is: (%d, %d), the lr is: (%d, %d) and k is: %d\n", s.lastIndex_x, ul.first, ul.second, lr.first, lr.second, k);
+	//printf("I'm in getEntropy (toqutree.cpp)\n");
+	vector<int> Hist = s.buildHist(ul, lr);
+	//printf("Hist vector is successfully found\n");
+	return s.entropy(Hist, pow(2,k+1));
+/*
 	int last_index = pow(2,k+1) - 1;
 	int index = pow(2,k) - 1;
 	//NO WRAPPING
 	if(ul.first < lr.first && ul.second < lr.second){
-		return s.entropy(ul, lr);
+		return s->entropy(ul, lr);
 	}
 	//wrapping the corners
 	else if(ul.first > lr.first && ul.second > lr.second){
 		//bottomright + bottomleft + topright + topleft
-		vector<int> BR = s.buildHist(ul, make_pair(last_index, last_index));
-		vector<int> BL = s.buildHist(make_pair(0, ul.second), make_pair(lr.first, last_index));
-		vector<int> TR = s.buildHist(make_pair(ul.first,0), make_pair(last_index, lr.second));
-		vector<int> TL = s.buildHist(make_pair(0,0), lr);
+		vector<int> BR = s->buildHist(ul, make_pair(last_index, last_index));
+		vector<int> BL = s->buildHist(make_pair(0, ul.second), make_pair(lr.first, last_index));
+		vector<int> TR = s->buildHist(make_pair(ul.first,0), make_pair(last_index, lr.second));
+		vector<int> TL = s->buildHist(make_pair(0,0), lr);
 		for(int a = 0; a < 36; a++){
 			BR[a] += BL[a] + TR[a] + TL[a];
 		}
-		return s.entropy(BR, pow(2,k+1));
+		return s->entropy(BR, pow(2,k+1));
 	} 
 	//WRAPPING AROUND THE SIDE
 	else if(ul.first > lr.first){
 		//Left rect + right rect
-		vector<int> Left_Rect = s.buildHist(ul, make_pair(last_index, ul.second+index));
-		//long Left_Area = s.rectArea(ul, make_pair(last_index, ul.second + index));	
-		vector<int> Right_Rect = s.buildHist(make_pair(0,ul.second), lr);
-		//long Right_Area = s.rectArea(make_pair(0, ul.second), lr);
+		vector<int> Left_Rect = s->buildHist(ul, make_pair(last_index, lr.second));	
+		vector<int> Right_Rect = s->buildHist(make_pair(0,ul.second), lr);
 		for(int a = 0; a < 36; a++){
 			Left_Rect[a] = Left_Rect[a] + Right_Rect[a];
 		}	
-		return s.entropy(Left_Rect, pow(2,k+1));
+		return s->entropy(Left_Rect, pow(2,k+1));
 	}
 	//WRAPPING AROUND THE TOP
 	else if(lr.second < ul.second){
 		//bottom + top
-		vector<int> bottom = s.buildHist(ul, make_pair(lr.first, last_index));
-		//long bottom_area = s.rectArea(ul, make_pair(lr.first, last_index));
-		vector<int> top = s.buildHist(make_pair(ul.first, 0), lr);
-		//long top_area = s.rectArea(make_pair(ul.first, 0), lr);
+		vector<int> bottom = s->buildHist(ul, make_pair(lr.first, last_index));
+		vector<int> top = s->buildHist(make_pair(ul.first, 0), lr);
 		for(int a = 0; a < 36; a++){
 			bottom[a] += top[a];
 		}
-		return s.entropy(bottom, pow(2,k+1));
+		return s->entropy(bottom, pow(2,k+1));
 	}
-
+*/
+	
 //return s.entropy(make_pair(0,0), make_pair(0,0));
 }
 
@@ -388,12 +387,6 @@ PNG * toqutree::helpRender(PNG * Image, Node * node){
 	if(node->NW == NULL){
 		
 	}
-
-
-
-
-
-
 	unsigned int originalL = pow(2,node->dimension);
 	//add the index to get lr
 	unsigned int index = pow(2,root->dimension-1) - 1; 
@@ -512,19 +505,20 @@ toqutree::Node * toqutree::copy(const Node * other) {
 
 //@param  im  : the PNG of the parent
 //@param  ul, lr  : ul and lr of the children PNG you will return
-//@param  k   : the dimension of children
+//@param  k   : the dimension of the PNG you want to return
 PNG * toqutree::makePNG(PNG *im, pair<int,int> ul, int k){
-
+printf("I'm in makePNG\n");
 	PNG * Children = new PNG(pow(2,k), pow(2,k));
 //double check
 	int i = 0;
 	int j = 0;
 	for(int x = 0; x < pow(2,k); x++){
 		for(int y = 0; y < pow(2,k); y++){
-			i = (x + ul.first) % (int) pow(2,k+1);
-			j = (y + ul.second) % (int) pow(2,k+1);
+			i = (x + ul.first) % (int) im->width();
+			j = (y + ul.second) % (int) im->height();
 			*(Children->getPixel(x, y)) = *(im->getPixel(i,j));
 		}
 	}
+printf("Done makePNG\n");
 return Children;
 }

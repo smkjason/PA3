@@ -8,6 +8,8 @@ stats::stats(PNG & im){
 	double Sat = 0.;
 	double Lum = 0.;
 	int binnumber = 0;
+	lastIndex_x = im.width() - 1;
+	lastIndex_y = im.height() - 1;
 	for(unsigned int t = 0; t < im.width(); t++){
 		sumHueX.push_back(vector<double>(im.height(), 0));
 		sumHueY.push_back(vector<double>(im.height(), 0));
@@ -67,7 +69,6 @@ stats::stats(PNG & im){
 long stats::rectArea(pair<int,int> ul, pair<int,int> lr){
 	long length = lr.first - ul.first + 1;
 	long height = lr.second - ul.second + 1;
-
 	
 	return height * length;
 }
@@ -112,11 +113,12 @@ return HSLAPixel(hue, avgS, avgL, 1.0);
 }
 
 vector<int> stats::buildHist(pair<int,int> ul, pair<int,int> lr){
-
+//printf("I'm in buildHist\n");
 	vector<int> histogram(36, 0);
-	//histogram.reserve(36);
+    //NO WRAP
+    if(ul.first < lr.first && ul.second < lr.second){
 	for(int k = 0; k < 36; k++){
-		histogram[k] += hist[lr.first][lr.second][k];
+		histogram[k] = hist[lr.first][lr.second][k];
 		// subtract the rectangle on its left
 		if(ul.first > 0){
 		histogram[k] -= hist[ul.first-1][lr.second][k];
@@ -130,6 +132,78 @@ vector<int> stats::buildHist(pair<int,int> ul, pair<int,int> lr){
 		histogram[k] += hist[ul.first-1][ul.second-1][k];
 		}
 	}
+//	printf("NO WRAP CASE IS FINE\n\n");
+	return histogram;
+    }
+    //WRAP CORNERS
+    else if(ul.first > lr.first && ul.second > lr.second){
+	for(int k = 0; k < 36; k++){
+//	    printf("ul.first: %d ul.second: %d\n", ul.first, ul.second);
+	    //add the top left corner
+	    histogram[k] += hist[lr.first][lr.second][k];
+	    
+	    //add the top right corner
+	    histogram[k] += hist[lastIndex_x][lr.second][k];
+	    if(ul.first > 0)
+	    histogram[k] -= hist[ul.first-1][lr.second][k];//left
+
+	    //add the bottom left
+	    histogram[k] += hist[ul.first][lastIndex_y][k];
+	    histogram[k] -= hist[lr.first][ul.second-1][k];
+
+	    //add the bottom right
+	    histogram[k] += hist[lastIndex_x][lastIndex_y][k];
+	    histogram[k] -= hist[lastIndex_x][ul.second-1][k];
+	    histogram[k] -= hist[ul.first-1][lastIndex_y][k];
+	    histogram[k] += hist[ul.first-1][ul.second-1][k];
+   	}
+//	printf("WRAP CORNERS IS FINE\n");
+	return histogram;
+    }
+    //WRAPPING THE SIDE
+    else if(ul.first > lr.first){
+	for(int k = 0; k < 36; k++){
+	    //the right
+	    histogram[k] += hist[lastIndex_x][lr.second][k];
+	    //the left
+	    histogram[k] += hist[lr.first][lr.second][k];
+	    // this is subtract the left  part for the right
+	    if(ul.first > 0){
+	        //the right
+                histogram[k] -= hist[ul.first-1][lr.second][k];
+	    }
+	    // for the right subtract the top
+	    if(ul.second > 0){
+ 		histogram[k] -= hist[lastIndex_x][ul.second-1][k];
+	       //subtract the top part for the wrap on the left
+		 histogram[k] -= hist[lr.first][ul.second-1][k];
+	    }
+	    //add the corner
+	    if(ul.first > 0 && ul.second > 0){
+	        histogram[k] += hist[ul.first-1][ul.second-1][k];
+            }
+	}
+//	printf("WRAP SIDE IS FINE\n");
+	return histogram;
+    }
+
+    //WRAP THE TOP
+    else if(lr.second < ul.second){
+	for(int k = 0; k < 36; k++){
+	    //bottom
+    	    histogram[k] += hist[lr.first][lastIndex_y][k];
+	    histogram[k] -= hist[lr.first][ul.second-1][k];
+	    histogram[k] -= hist[ul.first-1][lastIndex_y][k];
+	    histogram[k] += hist[ul.first-1][ul.second-1][k];
+
+	    //top
+	    histogram[k] += hist[lr.first][lr.second][k];
+	    histogram[k] -= hist[ul.first-1][lr.second][k];          	
+	}
+//	printf("WRAP TOP IS FINE\n");
+	return histogram;
+    }
+//	printf("WARNING: THIS SHOULD BE NEVER PRINTED\n");
 	return histogram;
 }
 // takes a distribution and returns entropy
