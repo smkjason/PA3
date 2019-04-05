@@ -116,7 +116,7 @@ vector<int> stats::buildHist(pair<int,int> ul, pair<int,int> lr){
 //printf("I'm in buildHist\n");
 	vector<int> histogram(36, 0);
     //NO WRAP
-    if(ul.first < lr.first && ul.second < lr.second){
+    if(ul.first <= lr.first && ul.second <= lr.second){
 	for(int k = 0; k < 36; k++){
 		histogram[k] = hist[lr.first][lr.second][k];
 		// subtract the rectangle on its left
@@ -148,16 +148,20 @@ vector<int> stats::buildHist(pair<int,int> ul, pair<int,int> lr){
 	    histogram[k] -= hist[ul.first-1][lr.second][k];//left
 
 	    //add the bottom left
-	    histogram[k] += hist[ul.first][lastIndex_y][k];
+	    histogram[k] += hist[lr.first][lastIndex_y][k];
+	    if(ul.second > 0)
 	    histogram[k] -= hist[lr.first][ul.second-1][k];
 
 	    //add the bottom right
 	    histogram[k] += hist[lastIndex_x][lastIndex_y][k];
+	    if(ul.second > 0)
 	    histogram[k] -= hist[lastIndex_x][ul.second-1][k];
+	    if(ul.first > 0)
 	    histogram[k] -= hist[ul.first-1][lastIndex_y][k];
+	    if(ul.first > 0 && ul.second > 0)
 	    histogram[k] += hist[ul.first-1][ul.second-1][k];
    	}
-//	printf("WRAP CORNERS IS FINE\n");
+	printf("WRAP CORNERS IS FINE\n");
 	return histogram;
     }
     //WRAPPING THE SIDE
@@ -183,7 +187,7 @@ vector<int> stats::buildHist(pair<int,int> ul, pair<int,int> lr){
 	        histogram[k] += hist[ul.first-1][ul.second-1][k];
             }
 	}
-//	printf("WRAP SIDE IS FINE\n");
+	printf("WRAP SIDE IS FINE\n");
 	return histogram;
     }
 
@@ -192,18 +196,22 @@ vector<int> stats::buildHist(pair<int,int> ul, pair<int,int> lr){
 	for(int k = 0; k < 36; k++){
 	    //bottom
     	    histogram[k] += hist[lr.first][lastIndex_y][k];
-	    histogram[k] -= hist[lr.first][ul.second-1][k];
-	    histogram[k] -= hist[ul.first-1][lastIndex_y][k];
-	    histogram[k] += hist[ul.first-1][ul.second-1][k];
+	    if(ul.second > 0)
+	       histogram[k] -= hist[lr.first][ul.second-1][k];
+	    if(ul.first > 0) 
+	       histogram[k] -= hist[ul.first-1][lastIndex_y][k];
+	    if(ul.first > 0 && ul.second > 0)
+		histogram[k] += hist[ul.first-1][ul.second-1][k];
 
 	    //top
 	    histogram[k] += hist[lr.first][lr.second][k];
-	    histogram[k] -= hist[ul.first-1][lr.second][k];          	
+	    if(ul.first > 0)
+	       histogram[k] -= hist[ul.first-1][lr.second][k];          	
 	}
-//	printf("WRAP TOP IS FINE\n");
+	printf("WRAP TOP IS FINE\n");
 	return histogram;
     }
-//	printf("WARNING: THIS SHOULD BE NEVER PRINTED\n");
+	printf("WARNING: THIS SHOULD BE NEVER PRINTED\n");
 	return histogram;
 }
 // takes a distribution and returns entropy
@@ -220,13 +228,11 @@ double stats::entropy(vector<int> & distn,int area){
 				* log2((double) distn[i]/(double) area);
 	}
 
-	return  -1 * entropy;
+	return  -1.0 * entropy;
 }
 
 double stats::entropy(pair<int,int> ul, pair<int,int> lr){
 
 	vector<int> histogram = buildHist(ul, lr);
-	double en = entropy(histogram, rectArea(ul, lr)); 
-	/* your code here */
-	return en;
+	return  entropy(histogram, rectArea(ul, lr)); 
 }
