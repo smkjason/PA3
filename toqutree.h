@@ -189,19 +189,24 @@ private:
    */
    Node * buildTree(PNG * im, int k);
 
-   double get_Avg(stats Stats, pair<int,int> SE_ul, int k); 
+   double get_Avg(stats & Stats, pair<int,int> SE_ul, int k); 
 
-   double getEntropy(stats s, pair<int,int> ul, pair<int,int> lr, int k);
+   double getEntropy(stats & s, pair<int,int> ul, pair<int,int> lr, int k);
 
    PNG * makePNG(PNG * im, pair<int,int> ul, int k); 
-  	
+  
+   PNG render(Node * node);
+	
+   void  putback(PNG SE, PNG SW, PNG NE, PNG NW, pair<int,int> ctr, PNG &png, int Dim);
+
+   
  //  PNG * helpRender(Node * node);
    
   // void fillPNG(PNG * Image, pair<int,int> ul, pair<int,int> lr, int k);
    
-  HSLAPixel * findPixel(Node * node, int x, int y);
+  //HSLAPixel * findPixel(Node * node, int x, int y);
 
-  bool checkinQuad(pair<int,int> ul, pair<int,int> lr, pair<int,int> coord, int k); 
+  //bool checkinQuad(pair<int,int> ul, pair<int,int> lr, pair<int,int> coord, int k); 
 
 /* =================== end of private PA3 functions ============== */
 };

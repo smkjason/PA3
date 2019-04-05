@@ -82,7 +82,7 @@ toqutree::Node * toqutree::buildTree(PNG * im, int k) {
 	printf("stats object made\n");	
 	//Find the min ENTROPY within ul_middle
 	double minEntropy = get_Avg(statsInfo, ul_middle, k-1);  	
-	printf("The index is: %d\n", index);
+	printf("The index is: %f\n", minEntropy);
 	double check_Entropy;
 	pair<int,int> check_P = ul_middle;
 	Split_Point = check_P;
@@ -94,8 +94,11 @@ toqutree::Node * toqutree::buildTree(PNG * im, int k) {
 			if(check_Entropy < minEntropy){
 				minEntropy = check_Entropy;
 				Split_Point = check_P;
-			} 
+				printf("CHANGED MIN ENTROPY\n");	
+			}
+			printf("%d, %f\n", y, minEntropy);
 		}
+				printf("DO I GET HERE\n"); 
 	}
 	printf("I've found the optimal split_point\n");
 	//Find average pixel for the root
@@ -149,7 +152,7 @@ toqutree::Node * toqutree::buildTree(PNG * im, int k) {
 // @param im  : the original image
 // @param SE_ul : possible splitting point
 // @param k   : dimention of the middle square you are traversing through AKA the dim of quadrant
-double toqutree::get_Avg(stats Stats, pair<int,int> SE_ul, int k){
+double toqutree::get_Avg(stats & Stats, pair<int,int> SE_ul, int k){
 	//call getEntropy for each Quadrant 
 	
 	printf("I'm in get_Avg\n");	
@@ -183,18 +186,18 @@ double toqutree::get_Avg(stats Stats, pair<int,int> SE_ul, int k){
 	//check the notation passing by reference etc for Stats
 	Average = getEntropy(Stats, SE_ul, SE_lr, k) + getEntropy(Stats, SW_ul, SW_lr, k)
 		+ getEntropy(Stats, NE_ul, NE_lr, k) + getEntropy(Stats, NW_ul, NW_lr, k);
-	return Average/4.;
-
+	return Average;
 }
 //get entropy of given quadrant *HANDLE WRAPPING HERE*
 // @param s : Stats of original image
 // @param ul, lr: ul, lr of the quadrant you are calculating entropy for
 // @param k : the dimension of the quadrant where the quadrant is 2^k x 2^k
-double toqutree::getEntropy(stats s, pair<int,int> ul, pair<int,int> lr, int k){
+double toqutree::getEntropy(stats & s, pair<int,int> ul, pair<int,int> lr, int k){
 	//printf("the dimension: %d, the ul is: (%d, %d), the lr is: (%d, %d) and k is: %d\n", s.lastIndex_x, ul.first, ul.second, lr.first, lr.second, k);
-	//printf("I'm in getEntropy (toqutree.cpp)\n");
+	printf("I'm in getEntropy (toqutree.cpp)\n");
 	vector<int> Hist = s.buildHist(ul, lr);
-	//printf("Hist vector is successfully found\n");
+	//printf("Hist vector is successfully found\n")
+	printf("%f\n", s.entropy(Hist, pow(2,k+1)));
 	return s.entropy(Hist, pow(2,k+1));
 /*
 	int last_index = pow(2,k+1) - 1;
@@ -239,25 +242,95 @@ double toqutree::getEntropy(stats s, pair<int,int> ul, pair<int,int> lr, int k){
 	
 //return s.entropy(make_pair(0,0), make_pair(0,0));
 }
-
 PNG toqutree::render(){
+	return render(root);
+}
+PNG toqutree::render(Node * node){
 
-	int originalDim = root->dimension;
-		
-	PNG *  renderedPNG = new PNG(pow(2,originalDim), pow(2,originalDim));
+	int Dim = node->dimension;
+	//2^Dim x 2^Dim
+	Dim = pow(2,Dim);
+	PNG NWs, NEs, SEs, SWs;	
+	PNG png(Dim, Dim);
 
-	for(unsigned int x = 0; x < pow(2,originalDim); x++){
-		for(unsigned int y = 0; y < pow(2,originalDim); y++){
-			*(renderedPNG->getPixel(x,y)) = HSLAPixel(0.,0.,0.);//*(findPixel(root, x, y));
+	if(node->NW == NULL && node->NE == NULL && node->SE == NULL && node->SW == NULL){
+		for(int x = 0; x < Dim; x++){
+			for(int y = 0; y < Dim; y++){
+				*(png.getPixel(x,y)) = node->avg;
+			}
 		}
 	}
+	else{
+/*
+	if(node->NW == NULL){
+	    //fill it with average color 	
+	}else{
+	    //recruse render and get NW
+	    NWs = render(node->NW);	
+	}
+	
+	if(node->SW == NULL){
+	    //fill it with average color
+	}else{
+	   //recurse render
+	   NEs = render(node->NE);
+	}
+	
+	if(node->NE == NULL){
+	    //fill it with average
+	}else{
+	    //recurse
+	    SEs = render(node->SE);
+	}	
+	
+	if(node->SE == NULL){
+	    //fill it with average
+	}else{
+	    //recurse
+	    SWs = render(node->SW);
+	}
+*/
+	NWs = render(node->NW);
+	NEs = render(node->NE);
+	SEs = render(node->SE);
+	SWs = render(node->SW);
 	// My algorithm for this problem included a helper function
 	// that was analogous to Find in a BST, but it navigated the 
 	// quadtree, instead.
-
+	}
+	putback(SEs, SWs, NEs, NWs, node->center, png, Dim-1);
 	/* your code here */
-	return *renderedPNG;
+	return png;
 }
+//Dim : the dimension of the subPNG pow(2,Dim) = the length of the subPNG
+void toqutree::putback(PNG SE, PNG SW, PNG NE, PNG NW, pair<int,int> ctr, PNG &png, int Dim){
+
+	int length = pow(2,Dim);
+		
+	pair<int,int> SE_ul, SW_ul, NW_ul, NE_ul;
+
+	SE_ul.first = ctr.first;
+	SE_ul.second = ctr.second;
+
+	SW_ul.first = (ctr.first + length) % png.width();
+	SW_ul.second = ctr.second;
+
+	NE_ul.first = ctr.first;
+	NE_ul.second = (ctr.second + length) % png.height();
+
+	NW_ul.first = SW_ul.first;
+	NW_ul.second = NE_ul.second;
+
+	for(int x = 0; x < Dim; x++){
+		for(int y = 0; y < Dim; y++){
+			*(png.getPixel((SE_ul.first + x) % png.width(), (SE_ul.second + y) % png.height())) = *(SE.getPixel(x,y)); 
+			*(png.getPixel((SW_ul.first + x) % png.width(), (SW_ul.second + y) % png.height())) = *(SW.getPixel(x,y)); 
+			*(png.getPixel((NE_ul.first + x) % png.width(), (NE_ul.second + y) % png.height())) = *(NE.getPixel(x,y)); 
+			*(png.getPixel((NW_ul.first + x) % png.width(), (NW_ul.second + y) % png.height())) = *(NW.getPixel(x,y)); 	
+		}
+	}
+}
+/*
 HSLAPixel * toqutree::findPixel(Node * node, int x, int y){
 	
 	if(node->dimension == 0){
@@ -319,6 +392,7 @@ HSLAPixel * toqutree::findPixel(Node * node, int x, int y){
 		}
 	}
 }
+*//*
 //where k is the dimension of the whole square
 bool toqutree::checkinQuad(pair<int,int> ul, pair<int,int> lr, pair<int,int> coord, int k){
 
@@ -380,7 +454,7 @@ bool toqutree::checkinQuad(pair<int,int> ul, pair<int,int> lr, pair<int,int> coo
 			return false;
 		}
 	}	
-}
+}*/
 /*
 PNG * toqutree::helpRender(PNG * Image, Node * node){
 	
